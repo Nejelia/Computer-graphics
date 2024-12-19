@@ -1,0 +1,105 @@
+#Сравнение производительности алгоритма заполнения многоугольников с затравкой и метода из библиотеки pyopengl.
+
+import time
+import pygame
+from pygame.locals import *
+from PIL import Image
+import random
+
+try:
+    from OpenGL.GL import *
+    from OpenGL.GLU import *
+except ImportError:
+    print("PyOpenGL не установлен. Установите его с помощью `pip install pyopengl`")
+
+# Инициализация Pygame и OpenGL
+def init_pygame_opengl(width, height):
+    pygame.init()
+    pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL)
+    glClearColor(1.0, 1.0, 1.0, 1.0)
+    gluOrtho2D(0, width, 0, height)
+
+# Алгоритм затравочного заполнения многоугольника
+def seed_fill_algorithm(image, start_x, start_y, fill_color, boundary_color):
+    width, height = image.size
+    pixels = image.load()
+    stack = [(start_x, start_y)]
+    while stack:
+        x, y = stack.pop()
+        if pixels[x, y] != boundary_color and pixels[x, y] != fill_color:
+            pixels[x, y] = fill_color
+            if x > 0: stack.append((x - 1, y))
+            if x < width - 1: stack.append((x + 1, y))
+            if y > 0: stack.append((x, y - 1))
+            if y < height - 1: stack.append((x, y + 1))
+
+# Генерация множества точек в квадрате
+def generate_square_points(top_left_x, top_left_y, side_length, num_points):
+    points = []
+    for _ in range(num_points):
+        x = random.randint(top_left_x, top_left_x + side_length - 1)
+        y = random.randint(top_left_y, top_left_y + side_length - 1)
+        points.append((x, y))
+    return points
+
+# Функция для заполнения многоугольника с использованием OpenGL
+def opengl_fill(polygon):
+    glClear(GL_COLOR_BUFFER_BIT)  
+    glColor3f(1.0, 0.0, 0.0)  # красный
+    glBegin(GL_POINTS)
+    for x, y in polygon:
+        glVertex2f(x, y)
+    glEnd()
+    glFlush()
+    pygame.display.flip() 
+
+# Функция для измерения времени выполнения
+def measure_time(func, *args):
+    start_time = time.time()
+    func(*args)
+    end_time = time.time()
+    return end_time - start_time
+
+# Основная функция
+def main():
+    # Настройки изображения для seed fill
+    width, height = 500, 500
+    image = Image.new("RGB", (width, height), "white")
+    
+    # Определение квадрата с координатами и размером
+    top_left_x, top_left_y = 150, 150  # Верхний левый угол квадрата
+    side_length = 200  # Длина стороны квадрата
+    num_points = 1000000  # Количество точек
+
+    # Генерация миллиона точек в пределах квадрата
+    polygon = generate_square_points(top_left_x, top_left_y, side_length, num_points)
+
+    # Проверка количества точек
+    print(f"Количество точек в квадрате: {len(polygon)}")
+
+    # Измерение времени для алгоритма затравочного заполнения
+    fill_color = (255, 0, 0)  # Красный цвет заполнения
+    boundary_color = (0, 0, 0)  # Черный цвет границы
+    seed_fill_time = measure_time(
+        seed_fill_algorithm, image, top_left_x + 10, top_left_y + 10, fill_color, boundary_color
+    )
+    print(f"Время выполнения затравочного алгоритма: {seed_fill_time:.4f} секунд")
+
+    # Инициализация Pygame и OpenGL для отображения
+    init_pygame_opengl(width, height)
+    opengl_fill_time = measure_time(opengl_fill, polygon)
+    print(f"Время выполнения OpenGL алгоритма: {opengl_fill_time:.4f} секунд")
+
+    # Ожидание закрытия окна
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                running = False
+        pygame.time.wait(100)
+    
+    pygame.quit()
+
+# Запуск основного кода
+if __name__ == "__main__":
+    main()
