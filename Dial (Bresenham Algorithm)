@@ -1,0 +1,75 @@
+import pygame
+import sys
+import math
+
+def bresenham_circle(xc, yc, radius):
+    """Алгоритм Брезенхема для рисования окружности."""
+    points = []
+    x = 0
+    y = radius
+    d = 3 - 2 * radius
+
+    def plot_circle_points(xc, yc, x, y):
+        """Добавляет точки для всех восьми октантов окружности."""
+        return [
+            (xc + x, yc + y),
+            (xc - x, yc + y),
+            (xc + x, yc - y),
+            (xc - x, yc - y),
+            (xc + y, yc + x),
+            (xc - y, yc + x),
+            (xc + y, yc - x),
+            (xc - y, yc - x),
+        ]
+
+    while y >= x:
+        points.extend(plot_circle_points(xc, yc, x, y))
+        x += 1
+        if d > 0:
+            y -= 1
+            d = d + 4 * (x - y) + 10
+        else:
+            d = d + 4 * x + 6
+    return points
+
+def main():
+    # Инициализация Pygame
+    pygame.init()
+    width, height = 800, 800
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Циферблат - Алгоритм Брезенхема")
+
+    # Фон экрана
+    screen.fill((255, 255, 255))  # Белый фон
+
+    # Параметры циферблата
+    xc, yc = width // 2, height // 2
+    radius = 300
+
+    # Рисование окружности циферблата
+    circle_points = bresenham_circle(xc, yc, radius)
+    for point in circle_points:
+        screen.set_at(point, (0, 0, 0))  # Черные пиксели
+
+    # Рисование делений циферблата
+    for hour in range(12):
+        angle = math.radians(hour * 30)  # Каждые 30 градусов
+        x_outer = int(xc + radius * math.cos(angle))
+        y_outer = int(yc - radius * math.sin(angle))
+        x_inner = int(xc + (radius - 30) * math.cos(angle))
+        y_inner = int(yc - (radius - 30) * math.sin(angle))
+        pygame.draw.line(screen, (0, 0, 0), (x_inner, y_inner), (x_outer, y_outer), 2)
+
+    pygame.display.flip()  # Обновление экрана
+
+    # Основной цикл программы
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
