@@ -1,0 +1,59 @@
+import pygame
+import sys
+from collections import deque
+
+def flood_fill(screen, x, y, fill_color, boundary_color):
+    """Реализует алгоритм заполнения затравкой."""
+    width, height = screen.get_size()
+    original_color = screen.get_at((x, y))[:3]
+
+    if original_color == fill_color or original_color == boundary_color:
+        return
+
+    stack = deque()
+    stack.append((x, y))
+
+    while stack:
+        x, y = stack.pop()
+        if x < 0 or x >= width or y < 0 or y >= height:
+            continue
+        current_color = screen.get_at((x, y))[:3]
+        if current_color == original_color:
+            screen.set_at((x, y), fill_color)
+            stack.append((x + 1, y))
+            stack.append((x - 1, y))
+            stack.append((x, y + 1))
+            stack.append((x, y - 1))
+
+def main():
+    # Инициализация Pygame
+    pygame.init()
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Заполнение затравкой")
+
+    # Фон экрана
+    screen.fill((255, 255, 255))  # Белый фон
+
+    # Рисование замкнутой области (например, прямоугольника)
+    boundary_color = (0, 0, 0)  # Черный цвет границы
+    pygame.draw.rect(screen, boundary_color, (200, 150, 400, 300), 2)  # Прямоугольник
+
+    pygame.display.flip()  # Обновление экрана
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Получение координат клика
+                x, y = event.pos
+                fill_color = (255, 0, 0)  # Красный цвет заполнения
+                flood_fill(screen, x, y, fill_color, boundary_color)
+                pygame.display.flip()
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
