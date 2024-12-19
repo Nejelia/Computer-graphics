@@ -1,0 +1,55 @@
+import pygame
+import sys
+
+def scanline_fill(screen, boundary_color, fill_color):
+    """Реализует алгоритм заполнения методом граничных точек (горизонтальное сканирование)."""
+    width, height = screen.get_size()
+    for y in range(height):
+        intersections = []
+        for x in range(width):
+            current_color = screen.get_at((x, y))[:3]
+            if current_color == boundary_color:
+                intersections.append(x)
+        # Заполнение между парами пересечений
+        for i in range(0, len(intersections), 2):
+            if i+1 < len(intersections):
+                start = intersections[i]
+                end = intersections[i+1]
+                pygame.draw.line(screen, fill_color, (start, y), (end, y))
+    pygame.display.flip()
+
+def main():
+    # Инициализация Pygame
+    pygame.init()
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Метод граничных точек (горизонтальное сканирование)")
+
+    # Фон экрана
+    screen.fill((255, 255, 255))  # Белый фон
+
+    # Рисование замкнутой области (например, многоугольника)
+    boundary_color = (0, 0, 0)  # Черный цвет границы
+    fill_color = (0, 0, 255)    # Синий цвет заполнения
+
+    # Определение многоугольника (прямоугольник для простоты)
+    polygon_points = [(200, 150), (600, 150), (600, 450), (200, 450)]
+    pygame.draw.polygon(screen, boundary_color, polygon_points, 2)  # Граница многоугольника
+
+    pygame.display.flip()  # Обновление экрана
+
+    # Заполнение после нажатия клавиши
+    running = True
+    filled = False
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and not filled:
+                scanline_fill(screen, boundary_color, fill_color)
+                filled = True
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
