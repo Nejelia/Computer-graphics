@@ -1,0 +1,75 @@
+import pygame
+import sys
+
+def bresenham_line(x0, y0, x1, y1):
+    """Алгоритм Брезенхема для рисования отрезка."""
+    points = []
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
+    x, y = x0, y0
+
+    sx = -1 if x0 > x1 else 1  # Направление по оси x
+    sy = -1 if y0 > y1 else 1  # Направление по оси y
+
+    if dy <= dx:
+        err = dx / 2.0
+        while x != x1:
+            points.append((x, y))
+            err -= dy
+            if err < 0:
+                y += sy
+                err += dx
+            x += sx
+    else:
+        err = dy / 2.0
+        while y != y1:
+            points.append((x, y))
+            err -= dx
+            if err < 0:
+                x += sx
+                err += dy
+            y += sy
+    points.append((x, y))
+    return points
+
+def main():
+    # Инициализация Pygame
+    pygame.init()
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Отрезок - Алгоритм Брезенхема")
+
+    # Фон экрана
+    screen.fill((255, 255, 255))  # Белый фон
+
+    # Ввод координат отрезка с консоли
+    try:
+        x0 = int(input("Введите x0: "))
+        y0 = int(input("Введите y0: "))
+        x1 = int(input("Введите x1: "))
+        y1 = int(input("Введите y1: "))
+    except ValueError:
+        print("Пожалуйста, вводите целые числа.")
+        pygame.quit()
+        sys.exit()
+
+    # Получение списка точек отрезка
+    line_points = bresenham_line(x0, y0, x1, y1)
+
+    # Рисование точек отрезка
+    for point in line_points:
+        pygame.draw.rect(screen, (0, 0, 0), (point[0], point[1], 1, 1))  # Черные пиксели
+
+    pygame.display.flip()  # Обновление экрана
+
+    # Основной цикл программы
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
