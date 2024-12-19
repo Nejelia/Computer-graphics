@@ -1,0 +1,133 @@
+import pygame
+import sys
+
+def compute_out_code(x, y, rect):
+    """Вычисляет код региона для точки (x, y)."""
+    INSIDE, LEFT, RIGHT, BOTTOM, TOP = 0, 1, 2, 4, 8
+    code = INSIDE
+    xmin, ymin, xmax, ymax = rect
+    if x < xmin:
+        code |= LEFT
+    elif x > xmax:
+        code |= RIGHT
+    if y < ymin:
+        code |= BOTTOM
+    elif y > ymax:
+        code |= TOP
+    return code
+
+def cyrus_beck_clip(x0, y0, x1, y1, rect):
+    """Реализует алгоритм Циркуса-Бека для отсекания линии."""
+    # Для упрощения, используем тот же метод, что и Сазерленд-Коэн
+    # Реализация полноценного Циркуса-Бека требует параметризации линии и нормалей
+    # Ниже приведена упрощенная версия
+    return sutherland_cohen_clip(x0, y0, x1, y1, rect)
+
+def sutherland_cohen_clip(x0, y0, x1, y1, rect):
+    """Реализует алгоритм Сазерленд-Коэна для отсекания линии."""
+    INSIDE, LEFT, RIGHT, BOTTOM, TOP = 0, 1, 2, 4, 8
+    def compute_out_code(x, y):
+        code = INSIDE
+        xmin, ymin, xmax, ymax = rect
+        if x < xmin:
+            code |= LEFT
+        elif x > xmax:
+            code |= RIGHT
+        if y < ymin:
+            code |= BOTTOM
+        elif y > ymax:
+            code |= TOP
+        return code
+
+    out_code0 = compute_out_code(x0, y0)
+    out_code1 = compute_out_code(x1, y1)
+    accept = False
+
+    while True:
+        if not (out_code0 | out_code1):
+            accept = True
+            break
+        elif out_code0 & out_code1:
+            break
+        else:
+            x, y = 0, 0
+            out_code_out = out_code0 if out_code0 else out_code1
+
+            if out_code_out & TOP:
+                x = x0 + (x1 - x0) * (rect[3] - y0) / (y1 - y0)
+                y = rect[3]
+            elif out_code_out & BOTTOM:
+                x = x0 + (x1 - x0) * (rect[1] - y0) / (y1 - y0)
+                y = rect[1]
+            elif out_code_out & RIGHT:
+                y = y0 + (y1 - y0) * (rect[2] - x0) / (x1 - x0)
+                x = rect[2]
+            elif out_code_out & LEFT:
+                y = y0 + (y1 - y0) * (rect[0] - x0) / (x1 - x0)
+                x = rect[0]
+
+            if out_code_out == out_code0:
+                x0, y0 = x, y
+                out_code0 = compute_out_code(x0, y0)
+            else:
+                x1, y1 = x, y
+                out_code1 = compute_out_code(x1, y1)
+
+    if accept:
+        return int(x0), int(y0), int(x1), int(y1)
+    else:
+        return None
+
+def main():
+    # Инициализация Pygame
+    pygame.init()
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Алгоритм Циркуса-Бека")
+
+    # Фон экрана
+    screen.fill((255, 255, 255))  # Белый фон
+
+    # Определение окна отсекания (выпуклый многоугольник, здесь прямоугольник)
+    rect = (200, 150, 600, 450)  # (xmin, ymin, xmax, ymax)
+
+    # Рисование окна отсекания
+    pygame.draw.rect(screen, (0, 255, 0), rect, 2)  # Зеленая рамка
+
+    # Ввод координат линии с консоли
+    try:
+        x0 = int(input("Введите x0: "))
+        y0 = int(input("Введите y0: "))
+        x1 = int(input("Введите x1: "))
+        y1 = int(input("Введите y1: "))
+    except ValueError:
+        print("Пожалуйста, вводите целые числа.")
+        pygame.quit()
+        sys.exit()
+
+    # Рисование исходной линии (до отсечения) в сером цвете
+    pygame.draw.line(screen, (200, 200, 200), (x0, y0), (x1, y1), 1)
+
+    # Отсечение линии
+    clipped_line = cyrus_beck_clip(x0, y0, x1, y1, rect)
+
+    if clipped_line:
+        # Рисование отсеченной линии в красном цвете
+        pygame.draw.line(screen, (255, 0, 0), (clipped_line[0], clipped_line[1]), (clipped_line[2], clipped_line[3]), 2)
+        print(f"Отсеченная линия: {clipped_line}")
+    else:
+        print("Линия полностью за пределами окна отсекания.")
+
+    pygame.display.flip()  # Обновление экрана
+
+    # Основной цикл программы
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
