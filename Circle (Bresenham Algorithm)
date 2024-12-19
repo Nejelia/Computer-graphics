@@ -1,0 +1,73 @@
+import pygame
+import sys
+
+def bresenham_circle(xc, yc, radius):
+    """Алгоритм Брезенхема для рисования окружности."""
+    points = []
+    x = 0
+    y = radius
+    d = 3 - 2 * radius
+
+    def plot_circle_points(xc, yc, x, y):
+        """Добавляет точки для всех восьми октантов окружности."""
+        return [
+            (xc + x, yc + y),
+            (xc - x, yc + y),
+            (xc + x, yc - y),
+            (xc - x, yc - y),
+            (xc + y, yc + x),
+            (xc - y, yc + x),
+            (xc + y, yc - x),
+            (xc - y, yc - x),
+        ]
+
+    while y >= x:
+        points.extend(plot_circle_points(xc, yc, x, y))
+        x += 1
+        if d > 0:
+            y -= 1
+            d = d + 4 * (x - y) + 10
+        else:
+            d = d + 4 * x + 6
+    return points
+
+def main():
+    # Инициализация Pygame
+    pygame.init()
+    width, height = 800, 600
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Окружность - Алгоритм Брезенхема")
+
+    # Фон экрана
+    screen.fill((255, 255, 255))  # Белый фон
+
+    # Ввод центра и радиуса окружности с консоли
+    try:
+        xc = int(input("Введите xc (координата центра по x): "))
+        yc = int(input("Введите yc (координата центра по y): "))
+        radius = int(input("Введите радиус окружности: "))
+    except ValueError:
+        print("Пожалуйста, вводите целые числа.")
+        pygame.quit()
+        sys.exit()
+
+    # Получение списка точек окружности
+    circle_points = bresenham_circle(xc, yc, radius)
+
+    # Рисование точек окружности
+    for point in circle_points:
+        pygame.draw.rect(screen, (0, 0, 0), (point[0], point[1], 1, 1))  # Черные пиксели
+
+    pygame.display.flip()  # Обновление экрана
+
+    # Основной цикл программы
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
